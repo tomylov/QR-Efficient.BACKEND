@@ -24,7 +24,7 @@ const restauranteController = {
                 }
             });
             if (!restaurante) {
-                res.status(404).json({ error: 'Restaurante no encontrado' });
+                return res.status(404).json({ error: 'Restaurante no encontrado' });
             }
             res.json(restaurante);
         }
