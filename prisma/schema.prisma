@@ -1,0 +1,153 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Grupo {
+  id       Int       @id @default(autoincrement())
+  nombre   String    @db.VarChar(125)
+  usuarios Usuario[]
+  permisos Permiso[] @relation("GrupoPermisos")
+}
+
+model Permiso {
+  id     Int     @id @default(autoincrement())
+  nombre String  @db.VarChar(125)
+  grupos Grupo[] @relation("GrupoPermisos")
+}
+
+model Persona {
+  id_persona Int       @id @default(autoincrement())
+  email      String    @db.VarChar(125)
+  nombre     String    @db.VarChar(125)
+  apellido   String    @db.VarChar(125)
+  dni        String    @db.VarChar(10)
+  Mesero     Mesero?
+  Cliente    Cliente?
+  Usuario    Usuario?
+}
+
+model Mesero {
+  id_mesero      Int             @id @default(autoincrement())
+  id_persona     Int             @unique
+  Persona        Persona         @relation(fields: [id_persona], references: [id_persona])
+  Restaurante    Restaurante     @relation(fields: [id_restaurante], references: [id_restaurante])
+  id_restaurante Int
+  MesasAtendidas Mesa_atendida[]
+}
+
+model Cliente {
+  id_cliente Int     @id @default(autoincrement())
+  id_persona Int     @unique
+  Persona    Persona @relation(fields: [id_persona], references: [id_persona])
+}
+
+model Usuario {
+  id_usuario     Int     @id @default(autoincrement())
+  nombre_usuario String  @unique
+  contrasena     String
+  activo         Boolean @default(true)
+  Persona        Persona @relation(fields: [id_persona], references: [id_persona])
+  id_persona     Int     @unique
+  Grupo          Grupo?  @relation(fields: [grupoId], references: [id])
+  grupoId        Int?
+  Comandas       Comanda[]
+}
+
+model Restaurante {
+  id_restaurante Int      @id @default(autoincrement())
+  nombre         String
+  direccion      String
+  Meseros        Mesero[]
+  Menus          Menu[]
+}
+
+model Menu {
+  id_menu         Int               @id @default(autoincrement())
+  descripcion     String
+  foto            String?
+  precio          Decimal
+  activo          Boolean           @default(true)
+  categoria       Categoria         @relation(fields: [id_categoria], references: [id_categoria])
+  id_categoria    Int
+  Restaurante     Restaurante       @relation(fields: [id_restaurante], references: [id_restaurante])
+  id_restaurante  Int
+  DetallesComanda Detalle_comanda[]
+}
+
+model Categoria {
+  id_categoria Int    @id @default(autoincrement())
+  nombre       String
+  Menus        Menu[]
+}
+
+model Mesa {
+  numero         Int             @id @default(autoincrement())
+  MesasAtendidas Mesa_atendida[]
+}
+
+model Mesa_atendida {
+  id_mesa_atendida Int      @id @default(autoincrement())
+  id_mesero        Int
+  id_mesa          Int
+  fecha            DateTime
+  ocupado          Boolean  @default(false)
+  Mesero           Mesero   @relation(fields: [id_mesero], references: [id_mesero])
+  Mesa             Mesa     @relation(fields: [id_mesa], references: [numero])
+  Cuentas          Cuenta[]
+}
+
+model Cuenta {
+  id_cuenta        Int           @id @default(autoincrement())
+  id_estado        Int
+  id_mesa_atendida Int
+  total            Decimal
+  EstadoCuenta     Estado_cuenta @relation(fields: [id_estado], references: [id_estado_cuenta])
+  MesaAtendida     Mesa_atendida @relation(fields: [id_mesa_atendida], references: [id_mesa_atendida])
+  Comandas         Comanda[]
+}
+
+model Estado_cuenta {
+  id_estado_cuenta Int      @id @default(autoincrement())
+  descripcion      String
+  Cuentas          Cuenta[]
+}
+
+model Comanda {
+  id_comanda        Int               @id @default(autoincrement())
+  id_estado_comanda Int
+  id_cuenta         Int
+  id_usuario        Int
+  observaciones     String?
+  EstadoComanda     Estado_comanda    @relation(fields: [id_estado_comanda], references: [id_estado_comanda])
+  Cuenta            Cuenta            @relation(fields: [id_cuenta], references: [id_cuenta])
+  Usuario           Usuario           @relation(fields: [id_usuario], references: [id_usuario])
+  DetallesComanda   Detalle_comanda[]
+}
+
+model Estado_comanda {
+  id_estado_comanda Int       @id @default(autoincrement())
+  descripcion       String
+  Comandas          Comanda[]
+}
+
+model Detalle_comanda {
+  id_detalle      Int     @id @default(autoincrement())
+  id_comanda      Int
+  id_menu         Int
+  observacion     String?
+  cantidad        Int
+  precio_unitario Decimal
+  Comanda         Comanda @relation(fields: [id_comanda], references: [id_comanda])
+  Menu            Menu    @relation(fields: [id_menu], references: [id_menu])
+}
