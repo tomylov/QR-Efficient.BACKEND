@@ -1,18 +1,10 @@
-import { PrismaClient } from '@prisma/client';
 import express from 'express';
+import api from './src/routes';
 
 const app = express();
-const prisma = new PrismaClient();
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-})
-
-async function main() {
-  // ... you will write your Prisma Client queries here
-  const allUsers = await prisma.usuario.findMany()
-  console.log(allUsers)
-}
+app.use(express.json());
+app.use('/api',api);
 
 const port = process.env.PORT || 3001;
 app.listen(port, () => console.log(`App listening on port: ${port}`))
