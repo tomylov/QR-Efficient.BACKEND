@@ -35,14 +35,15 @@ model Persona {
   Mesero     Mesero?
   Cliente    Cliente?
   Usuario    Usuario?
+  Comandas   Comanda[]
 }
 
 model Mesero {
   id_mesero      Int             @id @default(autoincrement())
   id_persona     Int             @unique
+  id_restaurante Int
   Persona        Persona         @relation(fields: [id_persona], references: [id_persona])
   Restaurante    Restaurante     @relation(fields: [id_restaurante], references: [id_restaurante])
-  id_restaurante Int
   MesasAtendidas Mesa_atendida[]
 }
 
@@ -53,23 +54,23 @@ model Cliente {
 }
 
 model Usuario {
-  id_usuario     Int     @id @default(autoincrement())
-  nombre_usuario String  @unique
-  contrasena     String
-  activo         Boolean @default(true)
-  Persona        Persona @relation(fields: [id_persona], references: [id_persona])
-  id_persona     Int     @unique
-  Grupo          Grupo?  @relation(fields: [grupoId], references: [id])
-  grupoId        Int?
-  Comandas       Comanda[]
+  id_usuario Int     @id @default(autoincrement())
+  email      String  @unique @db.VarChar(125)
+  contrasena String  @db.VarChar(125)
+  activo     Boolean @default(true)
+  Persona    Persona @relation(fields: [id_persona], references: [id_persona])
+  id_persona Int     @unique
+  Grupo      Grupo?  @relation(fields: [grupoId], references: [id])
+  grupoId    Int?
 }
 
 model Restaurante {
   id_restaurante Int      @id @default(autoincrement())
-  nombre         String
-  direccion      String
+  nombre         String   @db.VarChar(125)
+  direccion      String   @db.VarChar(125)
   Meseros        Mesero[]
   Menus          Menu[]
+  Mesas          Mesa[]
 }
 
 model Menu {
@@ -87,39 +88,49 @@ model Menu {
 
 model Categoria {
   id_categoria Int    @id @default(autoincrement())
-  nombre       String
+  nombre       String @db.VarChar(100)
   Menus        Menu[]
 }
 
 model Mesa {
   numero         Int             @id @default(autoincrement())
+  id_restaurante Int
+  Restaurante    Restaurante     @relation(fields: [id_restaurante], references: [id_restaurante])
   MesasAtendidas Mesa_atendida[]
 }
 
 model Mesa_atendida {
-  id_mesa_atendida Int      @id @default(autoincrement())
+  id_mesa_atendida Int         @id @default(autoincrement())
   id_mesero        Int
   id_mesa          Int
+  id_estado_mesa   Int
   fecha            DateTime
-  ocupado          Boolean  @default(false)
-  Mesero           Mesero   @relation(fields: [id_mesero], references: [id_mesero])
-  Mesa             Mesa     @relation(fields: [id_mesa], references: [numero])
+  ocupado          Boolean     @default(false)
+  Mesero           Mesero      @relation(fields: [id_mesero], references: [id_mesero])
+  Mesa             Mesa        @relation(fields: [id_mesa], references: [numero])
+  Estado_mesa      Estado_mesa @relation(fields: [id_estado_mesa], references: [id_estado_mesa])
   Cuentas          Cuenta[]
+}
+
+model Estado_mesa {
+  id_estado_mesa Int             @id @default(autoincrement())
+  descripcion    String          @db.VarChar(50)
+  MesasAtendidas Mesa_atendida[]
 }
 
 model Cuenta {
   id_cuenta        Int           @id @default(autoincrement())
-  id_estado        Int
+  id_estado_cuenta Int
   id_mesa_atendida Int
-  total            Decimal
-  EstadoCuenta     Estado_cuenta @relation(fields: [id_estado], references: [id_estado_cuenta])
+  total            Decimal       @db.Decimal(20, 2)
+  EstadoCuenta     Estado_cuenta @relation(fields: [id_estado_cuenta], references: [id_estado_cuenta])
   MesaAtendida     Mesa_atendida @relation(fields: [id_mesa_atendida], references: [id_mesa_atendida])
   Comandas         Comanda[]
 }
 
 model Estado_cuenta {
   id_estado_cuenta Int      @id @default(autoincrement())
-  descripcion      String
+  descripcion      String   @db.VarChar(50)
   Cuentas          Cuenta[]
 }
 
@@ -127,17 +138,17 @@ model Comanda {
   id_comanda        Int               @id @default(autoincrement())
   id_estado_comanda Int
   id_cuenta         Int
-  id_usuario        Int
-  observaciones     String?
+  id_persona        Int
+  observaciones     String?           @db.VarChar(50)
   EstadoComanda     Estado_comanda    @relation(fields: [id_estado_comanda], references: [id_estado_comanda])
   Cuenta            Cuenta            @relation(fields: [id_cuenta], references: [id_cuenta])
-  Usuario           Usuario           @relation(fields: [id_usuario], references: [id_usuario])
+  Persona           Persona           @relation(fields: [id_persona], references: [id_persona])
   DetallesComanda   Detalle_comanda[]
 }
 
 model Estado_comanda {
   id_estado_comanda Int       @id @default(autoincrement())
-  descripcion       String
+  descripcion       String    @db.VarChar(30)
   Comandas          Comanda[]
 }
 
@@ -145,9 +156,9 @@ model Detalle_comanda {
   id_detalle      Int     @id @default(autoincrement())
   id_comanda      Int
   id_menu         Int
-  observacion     String?
+  observacion     String? @db.VarChar(50)
   cantidad        Int
-  precio_unitario Decimal
+  precio_unitario Decimal @db.Decimal(20, 2)
   Comanda         Comanda @relation(fields: [id_comanda], references: [id_comanda])
   Menu            Menu    @relation(fields: [id_menu], references: [id_menu])
 }
