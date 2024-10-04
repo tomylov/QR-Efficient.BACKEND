@@ -47,7 +47,7 @@ export const validarUpdateCliente = [
     }
 ];
 
-export const validarCreateCliente = [
+export const validarCreateCliente = () =>[
     // Validaciones para los datos de la persona
     body('persona.nombre')
         .notEmpty().withMessage('El nombre es requerido')

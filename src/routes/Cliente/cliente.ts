@@ -4,7 +4,7 @@ import { validarCreateCliente, validarUpdateCliente } from "../../middlewares/cl
 
 const router = Router();
 router.get('/:id', clienteController.getClienteId);
-router.post('/', validarCreateCliente, clienteController.createCliente);
+router.post('/', validarCreateCliente(), clienteController.createCliente);
 router.put('/:id', validarUpdateCliente, clienteController.updateCliente);
 
 export default router;

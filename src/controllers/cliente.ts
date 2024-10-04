@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Cliente, PrismaClient } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -35,6 +36,7 @@ const clienteController = {
     createCliente: async (req: Request, res: Response) => {
         const { usuario, persona } = req.body;
         try {
+            const hashedPassword = await bcrypt.hash(usuario.contrasena, 10);
             const nuevaPersona = await prisma.persona.create({
                 data: {
                     email: usuario.email,
@@ -46,7 +48,7 @@ const clienteController = {
             const nuevoUsuario = await prisma.usuario.create({
                 data: {
                     email: usuario.email,
-                    contrasena: usuario.contrasena,
+                    contrasena: hashedPassword,
                     activo: true,
                     Persona: {
                         connect: { id_persona: nuevaPersona.id_persona }
@@ -89,6 +91,8 @@ const clienteController = {
                 return res.status(404).json({ error: 'cliente no encontrado' });
             }
 
+            const hashedPassword = await bcrypt.hash(usuario.contrasena, 10);
+
             const clienteActualizado = await prisma.cliente.update({
                 where: { id_cliente: id },
                 data: {
@@ -100,7 +104,7 @@ const clienteController = {
                             Usuario: usuario ? {
                                 update: {
                                     email: usuario.email,
-                                    contrasena: usuario.contrasena,
+                                    contrasena: hashedPassword,
                                     activo: usuario.activo
                                 }
                             } : undefined

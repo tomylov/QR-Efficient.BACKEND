@@ -5,6 +5,6 @@ import loginValidator from "../../middlewares/login";
 
 
 const router = Router();
-router.post('/login', loginValidator, loginController.loginUsuarios);
+router.post('/', loginValidator, loginController.loginUsuarios);
 
 export default router;
