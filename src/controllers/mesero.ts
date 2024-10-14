@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { Mesero, Prisma, PrismaClient, Usuario } from "@prisma/client";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -7,7 +8,7 @@ const meseroController = {
     getMeserosRestaurante: async (req: Request, res: Response) => {
         const id = parseInt(req.params.id);
         try {
-            const meseros: Mesero[] = await prisma.mesero.findMany({
+            const meseros = await prisma.mesero.findMany({
                 where: {
                     id_restaurante: id
                 },
@@ -23,8 +24,25 @@ const meseroController = {
             if (!meseros || meseros.length === 0) {
                 return res.status(404).json({ error: "No se encontraron meseros para este restaurante" });
             }
+            const resultado = meseros.map(mesero => ({
+                id_restaurante: mesero.id_restaurante,
+                id_mesero: mesero.id_mesero,
+                id_persona: mesero.id_persona,
+                persona: {
+                    email: mesero.Persona?.email || "",
+                    nombre: mesero.Persona?.nombre || "",
+                    apellido: mesero.Persona?.apellido || "",
+                    dni: mesero.Persona?.dni || ""
+                },
+                usuario: {
+                    email: mesero.Persona?.Usuario?.email || "",
+                    contrasena: mesero.Persona?.Usuario?.contrasena || "",
+                    activo: mesero.Persona?.Usuario?.activo,
+                    grupoId: mesero.Persona?.Usuario?.grupoId || null
+                }
+            }));
 
-            res.json(meseros);
+            res.json(resultado);
         }
         catch (error) {
             res.status(500).json({ error: "Error al obtener los meseros" });
@@ -63,6 +81,7 @@ const meseroController = {
     createmesero: async (req: Request, res: Response) => {
         const { usuario, persona, id_restaurante } = req.body;
         try {
+            const hashedPassword = await bcrypt.hash(usuario.contrasena, 10);
             const nuevaPersona = await prisma.persona.create({
                 data: {
                     email: usuario.email,
@@ -74,7 +93,7 @@ const meseroController = {
             const nuevoUsuario = await prisma.usuario.create({
                 data: {
                     email: usuario.email,
-                    contrasena: usuario.contrasena,
+                    contrasena: hashedPassword,
                     activo: true,
                     Persona: {
                         connect: { id_persona: nuevaPersona.id_persona }
@@ -119,28 +138,30 @@ const meseroController = {
             if (!meseroExistente) {
                 return res.status(404).json({ error: 'mesero no encontrado' });
             }
+            const datosActualizacion = {
+                Restaurante: id_restaurante ? {
+                    connect: { id_restaurante: id_restaurante }
+                } : undefined,
+                Persona: persona ? {
+                    update: {
+                        nombre: persona.nombre,
+                        apellido: persona.apellido,
+                        dni: persona.dni,
+                        email: persona.email,
+                        Usuario: usuario ? {
+                            update: {
+                                email: usuario.email,
+                                activo: usuario.activo,
+                                ...(usuario.contrasena ? { contrasena: await bcrypt.hash(usuario.contrasena, 10) } : {})
+                            }
+                        } : undefined
+                    }
+                } : undefined
+            };
 
             const meseroActualizado = await prisma.mesero.update({
                 where: { id_mesero: id },
-                data: {
-                    Restaurante: id_restaurante ? {
-                        connect: { id_restaurante: id_restaurante }
-                    } : undefined,
-                    Persona: persona ? {
-                        update: {
-                            nombre: persona.nombre,
-                            apellido: persona.apellido,
-                            dni: persona.dni,
-                            Usuario: usuario ? {
-                                update: {
-                                    email: usuario.email,
-                                    contrasena: usuario.contrasena,
-                                    activo: usuario.activo
-                                }
-                            } : undefined
-                        }
-                    } : undefined
-                },
+                data: datosActualizacion,
                 include: {
                     Persona: {
                         include: {
@@ -150,7 +171,8 @@ const meseroController = {
                     Restaurante: true
                 }
             });
-            res.json('mesero actualizado con exito ' + meseroActualizado.id_mesero);
+
+            res.json('mesero actualizado con éxito ' + meseroActualizado.Persona.dni);
         }
         catch (error) {
             res.status(500).json({ error: 'Error al actualizar el mesero' });
