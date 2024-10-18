@@ -4,9 +4,17 @@ import { Menu, PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const menuController = {
-    getMenus: async (req: Request, res: Response) => {
+    getMenusRestaurante: async (req: Request, res: Response) => {
+        const id = parseInt(req.params.id);
         try {
-            const menus: Menu[] = await prisma.menu.findMany();
+            const menus: Menu[] = await prisma.menu.findMany({
+                where:{
+                    id_restaurante: id
+                },
+                include:{
+                    categoria:true
+                }
+            });
             res.json(menus);
         }
         catch (error) {
