@@ -104,7 +104,8 @@ model Mesa_atendida {
   id_mesero        Int
   id_mesa          Int
   id_estado_mesa   Int
-  fecha            DateTime
+  fecha_inicio     DateTime    @default(now())
+  fecha_cierre     DateTime?
   ocupado          Boolean     @default(false)
   Mesero           Mesero      @relation(fields: [id_mesero], references: [id_mesero])
   Mesa             Mesa        @relation(fields: [id_mesa], references: [numero])
