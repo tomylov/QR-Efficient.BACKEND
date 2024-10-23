@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import { Mesa_atendida, Prisma, PrismaClient, Usuario } from "@prisma/client";
-import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -51,7 +50,7 @@ const MesaAtendidaController = {
                 numero: mesas.numero,
                 MesaAtendida: mesas.MesasAtendidas.length > 0 ? {
                     id_mesa_atendida: mesas.MesasAtendidas[0].id_mesa_atendida,
-                    fecha_inicio: `${mesas.MesasAtendidas[0].fecha_inicio.toDateString()} ${mesas.MesasAtendidas[0].fecha_inicio.getUTCHours()}:${mesas.MesasAtendidas[0].fecha_inicio.getMinutes()}`,
+                    fecha_inicio: mesas.MesasAtendidas[0].fecha_inicio,
                     descripcion: mesas.MesasAtendidas[0].Estado_mesa.descripcion,
                     nombre: `${mesas.MesasAtendidas[0].Mesero.Persona.nombre} ${mesas.MesasAtendidas[0].Mesero.Persona.apellido}`
                 } :
@@ -68,7 +67,59 @@ const MesaAtendidaController = {
         catch (error) {
             res.status(500).json({ error: "Error al obtener los Mesas" });
         }
-    }
+    },
+
+    createMesaAtendida: async (req: Request, res: Response) => {
+        const { id_mesa, id_mesero } = req.body;
+        try {
+            const mesa = await prisma.mesa.findUnique({
+                where: {
+                    numero: id_mesa
+                }
+            });
+
+            if (!mesa) {
+                return res.status(404).json({ error: "Mesa no encontrada" });
+            }
+
+            const mesa_atendida = await prisma.mesa_atendida.create({
+                data: {
+                    id_mesa: id_mesa,
+                    id_mesero: id_mesero,
+                    id_estado_mesa: 1,
+                    fecha_inicio: new Date()
+                }
+            });
+
+            res.json("Mesa creada con exito "+ mesa_atendida);
+        }
+        catch (error) {
+            res.status(500).json({ error: "Error al crear la Mesa" });
+        }
+    },
+
+    updateMesaAtendida: async (req: Request, res: Response) => {
+        const { id_estado_mesa, fecha_cierre } = req.body;
+        const id = parseInt(req.params.id);
+        try {
+            const mesa_atendida = await prisma.mesa_atendida.update({
+                where: {
+                    id_mesa_atendida: id
+                },
+                data: {
+                    id_estado_mesa: id_estado_mesa,
+                    fecha_cierre: fecha_cierre
+                }
+            });
+
+            res.json("Mesa editada con exito"+mesa_atendida);
+        }
+        catch (error) {
+            res.status(500).json({ error: "Error al actualizar la Mesa" });
+        }
+    },
+
+
 }
 
 export default MesaAtendidaController;
