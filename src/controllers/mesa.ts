@@ -13,6 +13,7 @@ const MesaAtendidaController = {
                 },
                 select: {
                     numero: true,
+                    descripcion: true,
                     MesasAtendidas: {
                         select: {
                             id_mesa_atendida: true,
@@ -48,6 +49,7 @@ const MesaAtendidaController = {
 
             const mesas = Mesas_atendidas.map(mesas => ({
                 numero: mesas.numero,
+                descripcion: mesas.descripcion,
                 MesaAtendida: mesas.MesasAtendidas.length > 0 ? {
                     id_mesa_atendida: mesas.MesasAtendidas[0].id_mesa_atendida,
                     fecha_inicio: mesas.MesasAtendidas[0].fecha_inicio,
@@ -57,7 +59,7 @@ const MesaAtendidaController = {
                     {
                         id_mesa_atendida: mesas.numero,
                         fecha_inicio: null,
-                        descripcion: 'Mesa cerrada',
+                        descripcion: 'Cerrada',
                         nombre: 'Sin asignar'
                     }
             }));
@@ -118,8 +120,6 @@ const MesaAtendidaController = {
             res.status(500).json({ error: "Error al actualizar la Mesa" });
         }
     },
-
-
 }
 
 export default MesaAtendidaController;
