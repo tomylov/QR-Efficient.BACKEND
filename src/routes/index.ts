@@ -6,7 +6,9 @@ import persona from "./Persona/persona";
 import mesero from "./Mesero/mesero";
 import cliente from "./Cliente/cliente";
 import login from "./Login/login";
-import mesas from "./Mesas/mesas"
+import mesas from "./Mesas/mesas";
+import comandas from "./Comanda/comanda";
+import cuenta from "./Cuenta/Cuenta";
 
 
 const router = Router();
@@ -18,5 +20,7 @@ router.use("/mesero", mesero);
 router.use("/cliente", cliente);
 router.use("/login", login);
 router.use("/mesas", mesas);
+router.use("/comanda", comandas);
+router.use("/cuenta", cuenta);
 
 export default router;
