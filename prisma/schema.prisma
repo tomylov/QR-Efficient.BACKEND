@@ -95,6 +95,7 @@ model Categoria {
 model Mesa {
   numero         Int             @id @default(autoincrement())
   id_restaurante Int
+  descripcion    String
   Restaurante    Restaurante     @relation(fields: [id_restaurante], references: [id_restaurante])
   MesasAtendidas Mesa_atendida[]
 }
@@ -124,6 +125,7 @@ model Cuenta {
   id_estado_cuenta Int
   id_mesa_atendida Int
   total            Decimal       @db.Decimal(20, 2)
+  fecha_cierre     DateTime?
   EstadoCuenta     Estado_cuenta @relation(fields: [id_estado_cuenta], references: [id_estado_cuenta])
   MesaAtendida     Mesa_atendida @relation(fields: [id_mesa_atendida], references: [id_mesa_atendida])
   Comandas         Comanda[]
@@ -140,6 +142,7 @@ model Comanda {
   id_estado_comanda Int
   id_cuenta         Int
   id_persona        Int
+  total             Decimal           @db.Decimal(20, 2)
   observaciones     String?           @db.VarChar(50)
   EstadoComanda     Estado_comanda    @relation(fields: [id_estado_comanda], references: [id_estado_comanda])
   Cuenta            Cuenta            @relation(fields: [id_cuenta], references: [id_cuenta])
