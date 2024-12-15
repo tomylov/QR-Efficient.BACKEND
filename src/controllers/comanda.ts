@@ -35,8 +35,10 @@ const comandaController = {
             const comandas = await prisma.comanda.findMany({
                 where: {
                     Cuenta: {
-                        id_mesa_atendida: id_mesa,
                         id_estado_cuenta: 1,
+                        MesaAtendida: {
+                            id_mesa: id_mesa,
+                        },
                     },
                 },
                 include: {
@@ -45,9 +47,6 @@ const comandaController = {
                 },
             });
 
-            if (comandas.length === 0) {
-                return res.status(404).json({ message: 'No hay comandas para esta mesa con cuenta abierta.' });
-            }
 
             // Devolvemos las comandas
             return res.status(200).json(comandas);
@@ -63,8 +62,10 @@ const comandaController = {
             const comandas = await prisma.comanda.findMany({
                 where: {
                     Cuenta: {
-                        id_mesa_atendida: id,
                         id_estado_cuenta: 1,
+                        MesaAtendida: {
+                            id_mesa: id,
+                        },
                     },
                     id_estado_comanda: {
                         not: 5,
@@ -76,15 +77,81 @@ const comandaController = {
                             Menu: true,
                         },
                     },
+                    Cuenta:{
+                        include: {
+                            MesaAtendida: true,
+                        },
+                    },
                 },
             });
-            console.log(comandas);
 
             if (comandas.length === 0) {
-                return res.status(404).json({ message: 'No hay comandas para esta mesa con cuenta abierta.' });
+                res.status(404).json({ message: 'No hay comandas para esta mesa con cuenta abierta.' });
             }
 
             return res.status(200).json(comandas);
+
+        } catch (error) {
+            res.status(500).json({ error: 'Error al obtener los detalles de la comanda' });
+        }
+    },
+
+    getComandasRestaurante: async (req: Request, res: Response) => {
+        const id = parseInt(req.params.id);
+        try {
+            const comandas = await prisma.comanda.findMany({
+                select: {
+                    id_comanda: true,
+                    id_estado_comanda: true,
+                    id_cuenta: true,
+                    observaciones: true,
+                    total: true,
+                    Cuenta: {
+                        select: {
+                            MesaAtendida: {
+                                select: {
+                                    Mesa: {
+                                        select: {
+                                            descripcion: true,
+                                            numero: true,
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    DetallesComanda: {
+                        select: {
+                            precio_unitario: true,
+                            cantidad: true,
+                            Menu: {
+                                select: {
+                                    descripcion: true,
+                                }
+                            }
+                        },
+                    },
+                },
+                where: {
+                    Cuenta: {
+                        MesaAtendida: {
+                            Mesa: {
+                                id_restaurante: id,
+                            },
+                        },
+                    },
+                    id_estado_comanda: {
+                        notIn: [1,5,6],
+                    },
+                },
+
+            })
+
+            if (comandas.length === 0) {
+                res.status(204).json({ message: 'No hay comandas para este restaurante con cuenta abierta.' });
+            }
+
+            res.status(200).json(comandas);
 
         } catch (error) {
             res.status(500).json({ error: 'Error al obtener los detalles de la comanda' });
@@ -126,16 +193,7 @@ const comandaController = {
                         id_estado_mesa: 2,
                     }
                 });
-            }/* else{
-                prisma.cuenta.update({
-                    where: {
-                        id_cuenta: cuenta.id_cuenta
-                    },
-                    data: {
-                        total: cuenta.total + total,
-                    }
-                });
-            } */
+            }
 
             const comanda = await prisma.comanda.create({
                 data: {
@@ -154,8 +212,6 @@ const comandaController = {
                     DetallesComanda: true,
                 },
             });
-
-            console.log(comanda);
 
             res.status(201).json('Comanda creada con exito');
         } catch (error) {
