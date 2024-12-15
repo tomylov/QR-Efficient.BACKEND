@@ -120,6 +120,32 @@ const MesaAtendidaController = {
             res.status(500).json({ error: "Error al actualizar la Mesa" });
         }
     },
+
+    getMesaAtendida: async (req: Request, res: Response) => {
+        const id = parseInt(req.params.id);
+        try {
+            const mesa_atendida = await prisma.mesa_atendida.findFirstOrThrow({
+                where: {
+                    id_estado_mesa: {
+                        not: 3
+                    },
+                    Mesa: {
+                        numero: id
+                    }
+                },
+            });
+
+
+            if (!mesa_atendida) {
+                return res.status(404).json({ error: "Mesa no encontrada" });
+            }
+
+            res.status(200).json(mesa_atendida);
+
+        } catch (error) {
+            res.status(500).json({ error: "Error al obtener la Mesa" });
+        }
+    },
 }
 
 export default MesaAtendidaController;
