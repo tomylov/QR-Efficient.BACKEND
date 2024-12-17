@@ -25,6 +25,14 @@ const loginController = {
                 return res.status(401).json({ message: 'Credenciales incorrectas' });
             }
 
+            const Persona = await prisma.persona.findUnique({
+                where: { id_persona: usuario.id_persona },
+                include: {
+                    Mesero: true,
+                    Cliente: true,
+                },
+            });
+
 /*             // Generar un token JWT
             const token = jwt.sign(
                 { id_usuario: usuario.id_usuario, email: usuario.email },
@@ -41,6 +49,7 @@ const loginController = {
                     id_persona: usuario.id_persona,
                     grupoId: usuario.grupoId,
                 },
+                Persona,
             });
         } catch (error) {
             res.status(500).json({ message: 'Error en el servidor', error });
