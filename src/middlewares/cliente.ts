@@ -4,17 +4,31 @@ import { body, param, validationResult } from 'express-validator';
 
 const prisma = new PrismaClient();
 
-export const validarUpdateCliente = [
+export const validarUpdateCliente = () => [
     // Validaciones existentes
     param('id').isInt().withMessage('ID de cliente debe ser un número entero'),
-    body('persona.nombre').optional().isString().isLength({ min: 2, max: 100 }).withMessage('Nombre debe tener entre 2 y 100 caracteres'),
-    body('persona.apellido').optional().isString().isLength({ min: 2, max: 100 }).withMessage('Apellido debe tener entre 2 y 100 caracteres'),
-    body('persona.dni').optional().isString().isLength({ min: 8, max: 8 }).matches(/^[a-zA-Z0-9]+$/).withMessage('El DNI solo debe contener letras y números').withMessage('DNI debe tener entre 5 y 20 caracteres'),
-    body('usuario.contrasena').optional().isString().isLength({ min: 6 }).withMessage('Contraseña debe tener al menos 6 caracteres'),
-    body('usuario.activo').optional().isBoolean().withMessage('Activo debe ser un valor booleano'),
+    body('Persona.nombre').optional().isString().isLength({ min: 2, max: 100 }).withMessage('Nombre debe tener entre 2 y 100 caracteres'),
+    body('Persona.apellido').optional().isString().isLength({ min: 2, max: 100 }).withMessage('Apellido debe tener entre 2 y 100 caracteres'),
+    body('Persona.dni')
+        .optional().isString().isLength({ min: 8, max: 8 }).withMessage('DNI debe tener 8 caracteres')
+        .isInt().withMessage('El DNI solo debe contener números')
+        .custom(async (dni: string, { req }) => {
+            const personaExistente = await prisma.persona.findFirst({
+                where: {
+                    dni,
+                    Cliente: { id_cliente: { not: parseInt(req.params?.id || '') } }
+                }
+            });
+            if (personaExistente) {
+                throw new Error('El DNI ya está registrado');
+            }
+            return true;
+        }),
+    body('Usuario.contrasena').optional().isString().isLength({ min: 6 }).withMessage('Contraseña debe tener al menos 6 caracteres'),
+    body('Usuario.activo').optional().isBoolean().withMessage('Activo debe ser un valor booleano'),
 
     // Validación personalizada para el email
-    body('usuario.email')
+    body('Usuario.email')
         .optional()
         .isEmail().withMessage('Email debe ser válido')
         .custom(async (email: string, { req }) => {
@@ -47,7 +61,7 @@ export const validarUpdateCliente = [
     }
 ];
 
-export const validarCreateCliente = () =>[
+export const validarCreateCliente = () => [
     // Validaciones para los datos de la persona
     body('persona.nombre')
         .notEmpty().withMessage('El nombre es requerido')
@@ -61,11 +75,11 @@ export const validarCreateCliente = () =>[
 
     body('persona.dni')
         .notEmpty().withMessage('El DNI es requerido')
-        .isString().withMessage('El DNI debe ser una cadena de texto')
-        .isLength({ min: 8, max: 8 }).withMessage('El DNI debe tener entre 5 y 20 caracteres')
+        .optional().isString().isLength({ min: 8, max: 8 }).withMessage('DNI debe tener 8 caracteres')
+        .isInt().withMessage('El DNI solo debe contener números')
         .custom(async (dni: string) => {
-            const personaExistente = await prisma.persona.findFirst({ where: { dni } });
-            if (personaExistente) {
+            const personaExistente = await prisma.persona.findFirst({ where: { dni }, include: { Cliente: true } });
+            if (personaExistente?.Cliente) {
                 throw new Error('El DNI ya está registrado');
             }
             return true;

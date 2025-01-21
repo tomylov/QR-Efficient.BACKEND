@@ -5,13 +5,13 @@ import bcrypt from "bcrypt";
 const prisma = new PrismaClient();
 
 const clienteController = {
-    getClienteId: async (req: Request, res: Response) => {
+    getClienteIdPersona: async (req: Request, res: Response) => {
         const id = parseInt(req.params.id);
 
         try {
             const cliente: Cliente = await prisma.cliente.findFirstOrThrow({
                 where: {
-                    id_cliente: id,
+                    id_persona: id,
                 },
                 include: {
                     Persona: {
@@ -80,7 +80,7 @@ const clienteController = {
 
     updateCliente: async (req: Request, res: Response) => {
         const id = parseInt(req.params.id);
-        const { usuario, persona } = req.body;
+        const { Usuario, Persona } = req.body;
 
         try {
             const clienteExistente = await prisma.cliente.findUnique({
@@ -91,21 +91,20 @@ const clienteController = {
                 return res.status(404).json({ error: 'cliente no encontrado' });
             }
 
-            const hashedPassword = await bcrypt.hash(usuario.contrasena, 10);
-
             const clienteActualizado = await prisma.cliente.update({
                 where: { id_cliente: id },
                 data: {
-                    Persona: persona ? {
+                    Persona: Persona ? {
                         update: {
-                            nombre: persona.nombre,
-                            apellido: persona.apellido,
-                            dni: persona.dni,
-                            Usuario: usuario ? {
+                            nombre: Persona.nombre,
+                            apellido: Persona.apellido,
+                            email: Persona.email,
+                            dni: Persona.dni,
+                            Usuario: Usuario ? {
                                 update: {
-                                    email: usuario.email,
-                                    contrasena: hashedPassword,
-                                    activo: usuario.activo
+                                    email: Usuario.email,
+                                    contrasena: Usuario.contrasena ? await bcrypt.hash(Usuario.contrasena, 10) : undefined,
+                                    activo: Usuario.activo
                                 }
                             } : undefined
                         }
