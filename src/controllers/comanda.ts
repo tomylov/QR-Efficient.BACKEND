@@ -44,6 +44,11 @@ const comandaController = {
                 include: {
                     Persona: true,
                     EstadoComanda: true,
+                    DetallesComanda: {
+                        include: {
+                            Menu: true,
+                        }
+                    },
                 },
             });
 
