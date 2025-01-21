@@ -125,6 +125,33 @@ const MesaAtendidaController = {
         const id = parseInt(req.params.id);
         try {
             const mesa_atendida = await prisma.mesa_atendida.findFirstOrThrow({
+                select: {
+                    id_mesa_atendida: true,
+                    fecha_inicio: true,
+                    fecha_cierre: true,
+                    id_estado_mesa: true,
+                    Mesa: {
+                        select: {
+                            numero: true,
+                            descripcion: true,
+                            id_restaurante: true
+                        }
+                    },
+                    Mesero: {
+                        select: {
+                            Persona: {
+                                select: {
+                                    nombre: true
+                                }
+                            }
+                        }
+                    },
+                    Estado_mesa: {
+                        select: {
+                            descripcion: true
+                        }
+                    }
+                },
                 where: {
                     id_estado_mesa: {
                         not: 3
