@@ -50,8 +50,10 @@ const comandaController = {
                         }
                     },
                 },
+                orderBy: {
+                    id_comanda: 'asc',
+                },
             });
-
 
             // Devolvemos las comandas
             return res.status(200).json(comandas);
@@ -82,7 +84,7 @@ const comandaController = {
                             Menu: true,
                         },
                     },
-                    Cuenta:{
+                    Cuenta: {
                         include: {
                             MesaAtendida: true,
                         },
@@ -146,10 +148,16 @@ const comandaController = {
                         },
                     },
                     id_estado_comanda: {
-                        notIn: [1,5,6],
+                        notIn: [1, 5, 6],
                     },
                 },
-
+                orderBy: [{
+                    id_estado_comanda: 'desc',
+                },
+                {
+                    id_comanda: 'asc',
+                },
+                ],
             })
 
             if (comandas.length === 0) {
