@@ -12,6 +12,18 @@ const loginController = {
             // Buscar al usuario por email
             const usuario = await prisma.usuario.findUnique({
                 where: { email },
+                select: {
+                    id_usuario: true,
+                    activo: true,
+                    id_persona: true,
+                    email: true,
+                    contrasena: true,
+                    Grupo: {
+                        select: {
+                            nombre: true,
+                        }
+                    }
+                }
             });
 
             // Si el usuario no existe o está inactivo
@@ -33,29 +45,31 @@ const loginController = {
                 },
             });
 
-/*             // Generar un token JWT
-            const token = jwt.sign(
-                { id_usuario: usuario.id_usuario, email: usuario.email },
-                process.env.JWT_SECRET || 'secretKey',
-                { expiresIn: '1h' }
-            ); */
+            /*             // Generar un token JWT
+                        const token = jwt.sign(
+                            { id_usuario: usuario.id_usuario, email: usuario.email },
+                            process.env.JWT_SECRET || 'secretKey',
+                            { expiresIn: '1h' }
+                        ); */
 
             // Enviar el token y los datos del usuario
-            res.json({
+            res.status(201).json({
                 //token,
-                usuario: {
+                Usuario: {
                     id_usuario: usuario.id_usuario,
                     email: usuario.email,
                     id_persona: usuario.id_persona,
-                    grupoId: usuario.grupoId,
+                    grupo: usuario.Grupo?.nombre,
                 },
                 Persona,
             });
         } catch (error) {
             res.status(500).json({ message: 'Error en el servidor', error });
         }
+    },
 
-    }
 }
+
+
 
 export default loginController;
