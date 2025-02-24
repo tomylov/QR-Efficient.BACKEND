@@ -1,18 +1,36 @@
 import { Request, Response } from "express";
 import { Menu, PrismaClient } from "@prisma/client";
+import { Decimal } from "@prisma/client/runtime/library";
 
 const prisma = new PrismaClient();
+
+const registrarAuditoria = async (data: {
+    id_menu: number;
+    id_persona: number;
+    tipo_accion: string;
+    precio_anterior?: Decimal;
+    precio_nuevo?: Decimal;
+}) => {
+    try {
+        await prisma.auditoria_Menu.create({
+            data,
+        });
+    } catch (error) {
+        // Se puede registrar el error en un log para revisión
+        console.error("Error al registrar auditoría:", error);
+    }
+};
 
 const menuController = {
     getMenusRestaurante: async (req: Request, res: Response) => {
         const id = parseInt(req.params.id);
         try {
             const menus: Menu[] = await prisma.menu.findMany({
-                where:{
+                where: {
                     id_restaurante: id
                 },
-                include:{
-                    categoria:true
+                include: {
+                    categoria: true
                 }
             });
             res.json(menus);
@@ -41,12 +59,26 @@ const menuController = {
     },
 
     createMenu: async (req: Request, res: Response) => {
+        const { descripcion, activo, precio, foto, id_categoria, id_restaurante } = req.body;
         try {
             const nuevoMenu: Menu = await prisma.menu.create({
                 data: {
-                    ...req.body
+                    descripcion: descripcion,
+                    activo: activo,
+                    precio: precio,
+                    foto: foto,
+                    id_categoria: id_categoria,
+                    id_restaurante: id_restaurante
                 },
             });
+
+            await registrarAuditoria({
+                id_menu: nuevoMenu.id_menu,
+                id_persona: req.body.id_persona,
+                tipo_accion: "CREATE",
+                precio_nuevo: nuevoMenu.precio,
+            });
+
             res.status(201).json('Menu creado con exito ' + nuevoMenu.descripcion);
         }
         catch (error) {
@@ -56,6 +88,7 @@ const menuController = {
 
     updateMenu: async (req: Request, res: Response) => {
         const id = parseInt(req.params.id);
+        const { descripcion, activo, precio, foto, id_categoria, id_restaurante } = req.body;
         try {
             const MenuExistente = await prisma.menu.findUnique({
                 where: { id_menu: id },
@@ -68,18 +101,44 @@ const menuController = {
             const updateMenu: Menu = await prisma.menu.update({
                 where: { id_menu: id },
                 data: {
-                    ...req.body
+                    descripcion: descripcion,
+                    activo: activo,
+                    precio: precio,
+                    foto: foto,
+                    id_categoria: id_categoria,
+                    id_restaurante: id_restaurante
                 },
             });
+
+            if (MenuExistente.activo === false && updateMenu.activo === true) {
+                await registrarAuditoria({
+                    id_menu: id,
+                    id_persona: req.body.id_persona,
+                    tipo_accion: "ACTIVAR",
+                    precio_anterior: MenuExistente.precio,
+                    precio_nuevo: updateMenu.precio,
+                });
+            } else {
+                await registrarAuditoria({
+                    id_menu: id,
+                    id_persona: req.body.id_persona,
+                    tipo_accion: "UPDATE",
+                    precio_anterior: MenuExistente.precio,
+                    precio_nuevo: updateMenu.precio,
+                });
+            };
+
             res.json('Menu actualizado con exito' + updateMenu.descripcion);
         }
         catch (error) {
-            res.status(500).json({ error: 'Error al actualizar el Menu' });
+            console.log(error);
+            res.status(500).json({ error: error });
         }
     },
 
     deleteMenu: async (req: Request, res: Response) => {
         const id = parseInt(req.params.id);
+        const { id_persona } = req.query;
         try {
             const menuExistente = await prisma.menu.findUnique({
                 where: { id_menu: id },
@@ -91,10 +150,18 @@ const menuController = {
 
             await prisma.menu.update({
                 where: { id_menu: id },
-                data:{
+                data: {
                     activo: false
                 }
             });
+
+            await registrarAuditoria({
+                id_menu: id,
+                id_persona: parseInt(id_persona as string),
+                tipo_accion: "DESACTIVAR",
+                precio_anterior: menuExistente.precio,
+            });
+
             res.json('Menu eliminado con exito');
         }
         catch (error) {
