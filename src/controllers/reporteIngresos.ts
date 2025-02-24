@@ -107,7 +107,7 @@ export const dashboardController = {
             fechaFinDate.setHours(23, 59, 59, 999);
 
             const ventasDiarias = await prisma.$queryRaw`
-                SELECT fecha, SUM(total) AS total
+                SELECT cast(fecha as date), SUM(total) AS total
                 FROM (
                     SELECT DISTINCT cu.id_cuenta,
                     cu.fecha_cierre AS fecha,
@@ -123,7 +123,7 @@ export const dashboardController = {
                     cu.fecha_cierre BETWEEN ${fechaInicioDate} AND ${fechaFinDate}
                     AND m.id_restaurante = ${parseInt(id_restaurante as string)} and co.id_estado_comanda != 5
                 ) AS sub
-                GROUP BY fecha;
+                GROUP BY cast(fecha as date);
             `;
             res.json(ventasDiarias);
         } catch (error) {
