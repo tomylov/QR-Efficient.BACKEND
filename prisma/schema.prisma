@@ -36,6 +36,7 @@ model Persona {
   Cliente    Cliente?
   Usuario    Usuario?
   Comandas   Comanda[]
+  auditorias Auditoria_Menu[]
 }
 
 model Mesero {
@@ -84,6 +85,7 @@ model Menu {
   Restaurante     Restaurante       @relation(fields: [id_restaurante], references: [id_restaurante])
   id_restaurante  Int
   DetallesComanda Detalle_comanda[]
+  auditorias      Auditoria_Menu[]
 }
 
 model Categoria {
@@ -165,4 +167,18 @@ model Detalle_comanda {
   precio_unitario Decimal @db.Decimal(20, 2)
   Comanda         Comanda @relation(fields: [id_comanda], references: [id_comanda])
   Menu            Menu    @relation(fields: [id_menu], references: [id_menu])
+}
+
+model Auditoria_Menu {
+  id_auditoria    Int       @id @default(autoincrement())
+  id_menu         Int
+  id_persona      Int
+  fecha_accion    DateTime  @default(now())
+  tipo_accion     String
+  precio_anterior Decimal?  @db.Decimal(20, 2)
+  precio_nuevo    Decimal?  @db.Decimal(20, 2)
+
+  // Relaciones con Menu y Persona:
+  Menu    Menu    @relation(fields: [id_menu], references: [id_menu])
+  Persona Persona @relation(fields: [id_persona], references: [id_persona])
 }
