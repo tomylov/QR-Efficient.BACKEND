@@ -15,7 +15,11 @@ const meseroController = {
                 include: {
                     Persona: {
                         include: {
-                            Usuario: true,
+                            Usuario: {
+                                include: {
+                                    Grupo: true,
+                                }
+                            }
                         },
                     },
                 },
@@ -35,10 +39,12 @@ const meseroController = {
                     dni: mesero.Persona?.dni || ""
                 },
                 usuario: {
+                    id_usuario: mesero.Persona?.Usuario?.id_usuario || null,
                     email: mesero.Persona?.Usuario?.email || "",
                     contrasena: mesero.Persona?.Usuario?.contrasena || "",
                     activo: mesero.Persona?.Usuario?.activo,
-                    grupoId: mesero.Persona?.Usuario?.grupoId || null
+                    grupoId: mesero.Persona?.Usuario?.grupoId || null,
+                    grupo: mesero.Persona?.Usuario?.Grupo?.nombre || ""
                 }
             }));
 
@@ -55,7 +61,7 @@ const meseroController = {
         try {
             const mesero: Mesero = await prisma.mesero.findFirstOrThrow({
                 where: {
-                    id_mesero:id,
+                    id_mesero: id,
                 },
                 include: {
                     Persona: {
@@ -78,6 +84,22 @@ const meseroController = {
 
     },
 
+    deleteMesero: async (req: Request, res: Response) => {
+        const id = parseInt(req.params.id);
+        try {
+            const deleteUsuario = await prisma.usuario.update({
+                where: { id_usuario: id },
+                data: {
+                    activo: false,
+                }
+            });
+            res.json('Mesero eliminado con éxito');
+        }
+        catch (error) {
+            res.status(500).json({ error: "Error al eliminar el mesero" });
+        }
+    },
+
     createmesero: async (req: Request, res: Response) => {
         const { usuario, persona, id_restaurante } = req.body;
         try {
@@ -97,7 +119,10 @@ const meseroController = {
                     activo: true,
                     Persona: {
                         connect: { id_persona: nuevaPersona.id_persona }
-                    }
+                    },
+                    Grupo: usuario.grupoId ? {
+                        connect: { id: usuario.grupoId }
+                    } : undefined,
                 }
             });
 
@@ -152,6 +177,7 @@ const meseroController = {
                             update: {
                                 email: usuario.email,
                                 activo: usuario.activo,
+                                grupoId: usuario.grupoId,
                                 ...(usuario.contrasena ? { contrasena: await bcrypt.hash(usuario.contrasena, 10) } : {})
                             }
                         } : undefined
@@ -177,7 +203,23 @@ const meseroController = {
         catch (error) {
             res.status(500).json({ error: 'Error al actualizar el mesero' });
         }
-    }
+    },
+
+    getGrupos: async (req: Request, res: Response) => {
+        try {
+            const grupos = await prisma.grupo.findMany({
+
+                where: {
+                    id: {
+                        not: 3
+                    }
+                },
+            });
+            res.json(grupos);
+        } catch (error) {
+            res.status(500).json({ error: error });
+        }
+    },
 }
 
 export default meseroController;
