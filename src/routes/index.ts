@@ -9,7 +9,8 @@ import login from "./Login/login";
 import mesas from "./Mesas/mesas";
 import comandas from "./Comanda/comanda";
 import cuenta from "./Cuenta/Cuenta";
-
+import reporte from "./Reporte/Reporte";
+import auditoria from "./Auditoria/auditoria";
 
 const router = Router();
 router.use('/restaurante', restaurante);
@@ -22,5 +23,7 @@ router.use("/login", login);
 router.use("/mesas", mesas);
 router.use("/comanda", comandas);
 router.use("/cuenta", cuenta);
+router.use("/reporte", reporte);
+router.use("/auditoria", auditoria);
 
 export default router;
