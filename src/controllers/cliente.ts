@@ -52,6 +52,9 @@ const clienteController = {
                     activo: true,
                     Persona: {
                         connect: { id_persona: nuevaPersona.id_persona }
+                    },
+                    Grupo: {
+                        connect: { id: 3 }
                     }
                 }
             });
