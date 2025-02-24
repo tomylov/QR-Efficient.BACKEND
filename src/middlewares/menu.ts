@@ -17,6 +17,7 @@ export const validateMenu = [
         .isInt().withMessage('ID de categoría debe ser un número entero'),
     body('id_restaurante').notEmpty().withMessage('El menu debe estar asignado a un restaurante es requerida')
         .isInt().withMessage('ID de restaurante debe ser un número entero'),
+    body('id_persona').notEmpty().withMessage('El id de la persona es requerido'),
 
     // Middleware para verificar los resultados de la validación
     (req: Request, res: Response, next: NextFunction) => {
